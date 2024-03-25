@@ -8,7 +8,7 @@ from mamba_ssm.utils.hf import load_config_hf
 from datasets import Dataset, load_dataset, DatasetDict
 from trainer.mamba_trainer import MambaTrainer
 from trainer.MambaConfig import MambaConfig
-from trainer.data import DataCollatorForChatDataset
+from trainer.data import DataCollatorForLanguageModelling
 import wandb
 
 
@@ -111,7 +111,7 @@ def run(args):
     else:
         train_set.set_format(type="torch")
     eval_set.set_format(type="torch")
-    data_collator = DataCollatorForChatDataset(tokenizer)
+    data_collator = DataCollatorForLanguageModelling(tokenizer)
 
     if args.verbosity >= 1:
         print(train_set)

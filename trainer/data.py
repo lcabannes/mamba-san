@@ -1,42 +1,16 @@
 import torch
 import transformers
-import json
 
 from dataclasses import dataclass
 from typing import Dict, Sequence
 from tqdm import tqdm
-from torch.utils.data import Dataset
 
-
-class ChatDataset(Dataset):
-    def __init__(self, data_path: str, tokenizer: transformers.AutoTokenizer, conversation_template: str, max_tokens: int):
-        super(ChatDataset, self).__init__()
-        data = []
-        with open(data_path, "r") as file:
-            for line in file:  
-                try:
-                    data.append(json.loads(line))
-                except Exception as e:
-                    print("json processing exception", e)
-                    continue
-
-
-        data_dict = preprocess(data, tokenizer, conversation_template, max_tokens)
-
-        self.input_ids = data_dict["input_ids"]
-        self.labels = data_dict["labels"]
-
-    def __len__(self):
-        return len(self.input_ids)
-
-    def __getitem__(self, i) -> Dict[str, torch.Tensor]:
-        return dict(input_ids=self.input_ids[i], labels=self.labels[i])
 
 
 @dataclass
-class DataCollatorForChatDataset(object):
+class DataCollatorForLanguageModelling(object):
     """
-    Collate examples for supervised fine-tuning.
+    Collate examples for supervised pre-training.
     """
 
     tokenizer: transformers.PreTrainedTokenizer
@@ -54,14 +28,7 @@ class DataCollatorForChatDataset(object):
             input_ids=input_ids,
             labels=labels,
         )
-    
 
-class ChatDataModule():
-    def __init__(self, tokenizer: transformers.PreTrainedTokenizer, data_path: str, conversation_template, max_tokens: int):
-
-        self.dataset = ChatDataset(tokenizer=tokenizer, data_path=data_path, conversation_template=conversation_template, max_tokens=max_tokens)
-        self.data_collator = DataCollatorForChatDataset(tokenizer=tokenizer)
-        
 
 def preprocess(conversations: Sequence[Sequence[dict]], tokenizer: transformers.PreTrainedTokenizer, conversation_template: str, max_tokens: int) -> Dict:
     """
@@ -81,6 +48,5 @@ def preprocess(conversations: Sequence[Sequence[dict]], tokenizer: transformers.
 
         tokenized_conv = tokenizer.apply_chat_template(current_conv, chat_template=conversation_template, max_length=max_tokens, truncation=True)
         all_input_ids.append(torch.LongTensor(tokenized_conv))
-
 
     return dict(input_ids=all_input_ids, labels=all_input_ids)
